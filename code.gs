@@ -12,10 +12,8 @@ function generateSummary() {
 
   for (let i = 1; i < data.length; i++) {
 
-    const row = data[i];
-
-    const agency = row[1];
-    const inTime = row[7];
+    const agency = data[i][1];
+    const inTime = data[i][7];
 
     if (!agency || !inTime) continue;
 
@@ -52,19 +50,27 @@ function generateSummary() {
 
 function getShift(timeValue){
 
-  const date = new Date(timeValue);
+  const parts = timeValue.toString().split(".");
 
-  const hour = date.getHours();
-  const minute = date.getMinutes();
+  const hour = parseInt(parts[0]);
+  const minute = parts[1] ? parseInt(parts[1]) : 0;
 
-  const totalMinutes = hour * 60 + minute;
+  const totalMinutes = hour*60 + minute;
 
-  if (totalMinutes >= 390 && totalMinutes <= 569) return "Shift1";   // 06:30–09:29
+  const shift1Start = 6*60 + 30;
+  const shift1End = 9*60 + 29;
 
-  if (totalMinutes >= 570 && totalMinutes <= 1109) return "General"; // 09:30–18:29
+  const generalStart = 9*60 + 30;
+  const generalEnd = 18*60 + 29;
 
-  if (totalMinutes >= 1110 || totalMinutes <= 29) return "Shift2";   // 18:30–00:29
+  const shift2Start = 18*60 + 30;
 
-  return "Night"; // 00:30–06:29
+  if (totalMinutes >= shift1Start && totalMinutes <= shift1End) return "Shift1";
+
+  if (totalMinutes >= generalStart && totalMinutes <= generalEnd) return "General";
+
+  if (totalMinutes >= shift2Start || totalMinutes <= 29) return "Shift2";
+
+  return "Night";
 
 }
