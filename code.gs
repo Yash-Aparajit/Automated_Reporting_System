@@ -1,7 +1,6 @@
 function generateSummary() {
 
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-
   const rawSheet = ss.getSheetByName("RAW_ATTENDANCE");
   const summarySheet = ss.getSheetByName("AUTO_SUMMARY");
 
@@ -16,21 +15,14 @@ function generateSummary() {
     const row = data[i];
 
     const agency = row[1];
-    const inTimeDecimal = row[7];
+    const inTime = row[7];
 
-    if (!agency || !inTimeDecimal) continue;
+    if (!agency || !inTime) continue;
 
-    const shift = getShiftFromDecimal(inTimeDecimal);
+    const shift = getShift(inTime);
 
     if (!summary[agency]) {
-
-      summary[agency] = {
-        Shift1:0,
-        General:0,
-        Shift2:0,
-        Night:0
-      };
-
+      summary[agency] = {Shift1:0, General:0, Shift2:0, Night:0};
     }
 
     summary[agency][shift]++;
@@ -44,17 +36,9 @@ function generateSummary() {
   for (let agency in summary) {
 
     const s = summary[agency];
-
     const total = s.Shift1 + s.General + s.Shift2 + s.Night;
 
-    output.push([
-      agency,
-      s.Shift1,
-      s.General,
-      s.Shift2,
-      s.Night,
-      total
-    ]);
+    output.push([agency,s.Shift1,s.General,s.Shift2,s.Night,total]);
 
   }
 
@@ -65,31 +49,22 @@ function generateSummary() {
 }
 
 
-function getShiftFromDecimal(timeValue) {
 
-  const hour = Math.floor(timeValue);
-  const minute = Math.round((timeValue - hour) * 100);
+function getShift(timeValue){
+
+  const date = new Date(timeValue);
+
+  const hour = date.getHours();
+  const minute = date.getMinutes();
 
   const totalMinutes = hour * 60 + minute;
 
-  const shift1Start = 6*60 + 30;
-  const shift1End = 9*60 + 29;
+  if (totalMinutes >= 390 && totalMinutes <= 569) return "Shift1";   // 06:30–09:29
 
-  const generalStart = 9*60 + 30;
-  const generalEnd = 18*60 + 29;
+  if (totalMinutes >= 570 && totalMinutes <= 1109) return "General"; // 09:30–18:29
 
-  const shift2Start = 18*60 + 30;
-  const shift2End = 24*60 + 29;
+  if (totalMinutes >= 1110 || totalMinutes <= 29) return "Shift2";   // 18:30–00:29
 
-  const nightStart = 0*60 + 30;
-  const nightEnd = 6*60 + 29;
-
-  if (totalMinutes >= shift1Start && totalMinutes <= shift1End) return "Shift1";
-
-  if (totalMinutes >= generalStart && totalMinutes <= generalEnd) return "General";
-
-  if (totalMinutes >= shift2Start || totalMinutes <= 29) return "Shift2";
-
-  return "Night";
+  return "Night"; // 00:30–06:29
 
 }
