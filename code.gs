@@ -3,52 +3,24 @@ function generateSummary() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
   const rawSheet = ss.getSheetByName("RAW_ATTENDANCE");
-  const uniqueSheet = ss.getSheetByName("UNIQUE_LOG");
   const summarySheet = ss.getSheetByName("AUTO_SUMMARY");
 
-  const rawData = rawSheet.getDataRange().getValues();
+  const data = rawSheet.getDataRange().getValues();
 
-  uniqueSheet.clear();
   summarySheet.clear();
-
-  uniqueSheet.appendRow(["Date","Agency","Emp Code","In Time","Shift"]);
-
-  const seen = new Set();
-  const uniqueRows = [];
-
-  for (let i = 1; i < rawData.length; i++) {
-
-    const row = rawData[i];
-
-    const agency = row[1];
-    const empCode = row[4];
-    const date = row[6];
-    const inTime = row[7];
-
-    if (!agency || !empCode || !date || !inTime) continue;
-
-    const key = empCode + "_" + date;
-
-    if (seen.has(key)) continue;
-
-    seen.add(key);
-
-    const shift = getShift(inTime);
-
-    uniqueRows.push([date, agency, empCode, inTime, shift]);
-
-  }
-
-  if (uniqueRows.length > 0) {
-    uniqueSheet.getRange(2,1,uniqueRows.length,5).setValues(uniqueRows);
-  }
 
   const summary = {};
 
-  uniqueRows.forEach(r => {
+  for (let i = 1; i < data.length; i++) {
 
-    const agency = r[1];
-    const shift = r[4];
+    const row = data[i];
+
+    const agency = row[1];
+    const inTimeDecimal = row[7];
+
+    if (!agency || !inTimeDecimal) continue;
+
+    const shift = getShiftFromDecimal(inTimeDecimal);
 
     if (!summary[agency]) {
 
@@ -63,7 +35,7 @@ function generateSummary() {
 
     summary[agency][shift]++;
 
-  });
+  }
 
   summarySheet.appendRow(["Agency","Shift1","General","Shift2","Night","Total"]);
 
@@ -93,17 +65,30 @@ function generateSummary() {
 }
 
 
-function getShift(timeValue){
+function getShiftFromDecimal(timeValue) {
 
-  const time = Utilities.formatDate(new Date(timeValue),"GMT+5:30","HH:mm");
+  const hour = Math.floor(timeValue);
+  const minute = Math.round((timeValue - hour) * 100);
 
-  if (time >= "06:30" && time < "09:30") return "Shift1";
+  const totalMinutes = hour * 60 + minute;
 
-  if (time >= "09:30" && time < "18:30") return "General";
+  const shift1Start = 6*60 + 30;
+  const shift1End = 9*60 + 29;
 
-  if (time >= "18:30" && time <= "23:59") return "Shift2";
+  const generalStart = 9*60 + 30;
+  const generalEnd = 18*60 + 29;
 
-  if (time >= "00:00" && time < "00:30") return "Shift2";
+  const shift2Start = 18*60 + 30;
+  const shift2End = 24*60 + 29;
+
+  const nightStart = 0*60 + 30;
+  const nightEnd = 6*60 + 29;
+
+  if (totalMinutes >= shift1Start && totalMinutes <= shift1End) return "Shift1";
+
+  if (totalMinutes >= generalStart && totalMinutes <= generalEnd) return "General";
+
+  if (totalMinutes >= shift2Start || totalMinutes <= 29) return "Shift2";
 
   return "Night";
 
