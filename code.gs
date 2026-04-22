@@ -47,7 +47,7 @@ function generateSummary() {
 }
 
 
-unction getShift(timeValue){
+function getShift(timeValue){
 
   let str = timeValue.toString().trim();
 
