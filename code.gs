@@ -51,22 +51,36 @@ function getShift(timeValue){
 
   let str = timeValue.toString().trim();
 
-  // ensure two digit minutes
-  if(!str.includes(".")) str += ".00";
-
   let parts = str.split(".");
   let hour = parseInt(parts[0]);
-  let minute = parseInt(parts[1]);
 
-  if(minute > 59){
-    minute = Math.round((minute/100)*60);
+  let minute = 0;
+
+  if(parts.length > 1){
+
+    let minStr = parts[1];
+
+    // handle 6.3 → 30 minutes
+    if(minStr.length === 1){
+      minute = parseInt(minStr) * 10;
+    } else {
+      minute = parseInt(minStr);
+    }
+
   }
 
   let totalMinutes = hour*60 + minute;
 
-  if(totalMinutes >= 360 && totalMinutes <= 569) return "Shift1";   // 06:00–09:29
-  if(totalMinutes >= 570 && totalMinutes <= 1109) return "General"; // 09:30–18:29
-  if(totalMinutes >= 1110 || totalMinutes <= 29) return "Shift2";   // 18:30–00:29
+  // SHIFT 1 → 06:00–08:50
+  if(totalMinutes >= 360 && totalMinutes <= 530) return "Shift1";
 
-  return "Night"; // 00:30–05:59
+  // GENERAL → 08:51–14:50
+  if(totalMinutes >= 531 && totalMinutes <= 890) return "General";
+
+  // SHIFT 2 → 14:51–21:30
+  if(totalMinutes >= 891 && totalMinutes <= 1290) return "Shift2";
+
+  // NIGHT → 21:31–05:59
+  return "Night";
+
 }
