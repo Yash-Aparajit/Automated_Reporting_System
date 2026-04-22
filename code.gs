@@ -51,26 +51,17 @@ function generateSummary() {
 function getShift(timeValue){
 
   const parts = timeValue.toString().split(".");
-
   const hour = parseInt(parts[0]);
   const minute = parts[1] ? parseInt(parts[1]) : 0;
 
-  const totalMinutes = hour*60 + minute;
+  const totalMinutes = hour * 60 + minute;
 
-  const shift1Start = 6*60 + 30;
-  const shift1End = 9*60 + 29;
+  if (totalMinutes >= 360 && totalMinutes <= 569) return "Shift1";   // 06:00–09:29
 
-  const generalStart = 9*60 + 30;
-  const generalEnd = 18*60 + 29;
+  if (totalMinutes >= 570 && totalMinutes <= 1109) return "General"; // 09:30–18:29
 
-  const shift2Start = 18*60 + 30;
+  if (totalMinutes >= 1110 || totalMinutes <= 29) return "Shift2";   // 18:30–00:29
 
-  if (totalMinutes >= shift1Start && totalMinutes <= shift1End) return "Shift1";
-
-  if (totalMinutes >= generalStart && totalMinutes <= generalEnd) return "General";
-
-  if (totalMinutes >= shift2Start || totalMinutes <= 29) return "Shift2";
-
-  return "Night";
+  return "Night"; // 00:30–05:59
 
 }
