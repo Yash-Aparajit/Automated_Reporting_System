@@ -66,7 +66,7 @@ function generateSummary() {
 
   const grandTotal = grand.Shift1 + grand.General + grand.Shift2 + grand.SixThirty;
 
-  output.push(["Plant 1 + New Plant","Total",grand.Shift1,grand.General,grand.Shift2,grand.SixThirty,grandTotal]);
+  output.push(["Grand Total","",grand.Shift1,grand.General,grand.Shift2,grand.SixThirty,grandTotal]);
 
   summarySheet.getRange(2,1,output.length,7).setValues(output);
 
@@ -179,7 +179,7 @@ function syncHRInput(){
         0, // New1
         0, // NewGen
         0, // New2
-        0  // NewNight
+        0  // NewSixThirty
       ]);
 
     }
@@ -232,7 +232,18 @@ function generateMPReport(){
 
   const output = [];
 
-  let grandTotal = 0;
+  let grand = {
+    s1:0, new1:0,
+    g:0, newG:0,
+    s2:0, new2:0,
+    n:0, newN:0,
+    req1:0, req2:0,
+    diff1:0, diff2:0,
+    total:0
+  };
+
+  let currentPlant = null;
+  let plantTotal = null;
 
   for(let i=1;i<summaryData.length;i++){
 
@@ -240,6 +251,36 @@ function generateMPReport(){
     const agency = summaryData[i][1];
 
     if(!plant || !agency || agency==="Total") continue;
+
+    if(currentPlant !== plant){
+
+      if(plantTotal){
+        output.push([
+          currentPlant,"Total",
+          plantTotal.s1,plantTotal.new1,
+          plantTotal.g,plantTotal.newG,
+          plantTotal.s2,plantTotal.new2,
+          plantTotal.n,plantTotal.newN,
+          plantTotal.req1,plantTotal.req2,
+          plantTotal.diff1,plantTotal.diff2,
+          plantTotal.total
+        ]);
+
+        output.push(["","","","","","","","","","","","","","",""]);
+      }
+
+      currentPlant = plant;
+
+      plantTotal = {
+        s1:0,new1:0,
+        g:0,newG:0,
+        s2:0,new2:0,
+        n:0,newN:0,
+        req1:0,req2:0,
+        diff1:0,diff2:0,
+        total:0
+      };
+    }
 
     const s1 = summaryData[i][2];
     const g  = summaryData[i][3];
@@ -259,7 +300,6 @@ function generateMPReport(){
     const newN = input[7];
 
     const diff1 = (s1 + new1 + g + newG) - req1;
-
     const diff2 = (s2 + new2 + n + newN) - req2;
 
     const total =
@@ -267,8 +307,6 @@ function generateMPReport(){
       g + newG +
       s2 + new2 +
       n + newN;
-
-    grandTotal += total;
 
     output.push([
       plant,agency,
@@ -281,7 +319,60 @@ function generateMPReport(){
       total
     ]);
 
+    plantTotal.s1 += s1;
+    plantTotal.new1 += new1;
+    plantTotal.g += g;
+    plantTotal.newG += newG;
+    plantTotal.s2 += s2;
+    plantTotal.new2 += new2;
+    plantTotal.n += n;
+    plantTotal.newN += newN;
+    plantTotal.req1 += req1;
+    plantTotal.req2 += req2;
+    plantTotal.diff1 += diff1;
+    plantTotal.diff2 += diff2;
+    plantTotal.total += total;
+
+    grand.s1 += s1;
+    grand.new1 += new1;
+    grand.g += g;
+    grand.newG += newG;
+    grand.s2 += s2;
+    grand.new2 += new2;
+    grand.n += n;
+    grand.newN += newN;
+    grand.req1 += req1;
+    grand.req2 += req2;
+    grand.diff1 += diff1;
+    grand.diff2 += diff2;
+    grand.total += total;
   }
+
+  if(plantTotal){
+    output.push([
+      currentPlant,"Total",
+      plantTotal.s1,plantTotal.new1,
+      plantTotal.g,plantTotal.newG,
+      plantTotal.s2,plantTotal.new2,
+      plantTotal.n,plantTotal.newN,
+      plantTotal.req1,plantTotal.req2,
+      plantTotal.diff1,plantTotal.diff2,
+      plantTotal.total
+    ]);
+  }
+
+  output.push(["","","","","","","","","","","","","","",""]);
+
+  output.push([
+    "Grand Total","",
+    grand.s1,grand.new1,
+    grand.g,grand.newG,
+    grand.s2,grand.new2,
+    grand.n,grand.newN,
+    grand.req1,grand.req2,
+    grand.diff1,grand.diff2,
+    grand.total
+  ]);
 
   reportSheet.getRange(2,1,output.length,15).setValues(output);
 
