@@ -30,7 +30,7 @@ function generateSummary() {
 
   }
 
-  summarySheet.appendRow(["Plant","Agency","Shift1","General","Shift2","Night","Total"]);
+  summarySheet.appendRow(["Plant","Agency","Shift1","General","Shift2","SixThirty","Total"]);
 
   const output = [];
 
@@ -43,30 +43,30 @@ function generateSummary() {
     for (const agency in summary[plant]) {
 
       const s = summary[plant][agency];
-      const total = s.Shift1 + s.General + s.Shift2 + s.Night;
+      const total = s.Shift1 + s.General + s.Shift2 + s.SixThirty;
 
-      output.push([plant, agency, s.Shift1, s.General, s.Shift2, s.Night, total]);
+      output.push([plant, agency, s.Shift1, s.General, s.Shift2, s.SixThirty, total]);
 
       plantTotal.Shift1 += s.Shift1;
       plantTotal.General += s.General;
       plantTotal.Shift2 += s.Shift2;
-      plantTotal.Night += s.Night;
+      plantTotal.SixThirty += s.SixThirty;
     }
 
-    const plantSum = plantTotal.Shift1 + plantTotal.General + plantTotal.Shift2 + plantTotal.Night;
+    const plantSum = plantTotal.Shift1 + plantTotal.General + plantTotal.Shift2 + plantTotal.SixThirty;
 
-    output.push([plant,"Total",plantTotal.Shift1,plantTotal.General,plantTotal.Shift2,plantTotal.Night,plantSum]);
+    output.push([plant,"Total",plantTotal.Shift1,plantTotal.General,plantTotal.Shift2,plantTotal.SixThirty,plantSum]);
     output.push(["","","","","","",""]);
 
     grand.Shift1 += plantTotal.Shift1;
     grand.General += plantTotal.General;
     grand.Shift2 += plantTotal.Shift2;
-    grand.Night += plantTotal.Night;
+    grand.SixThirty += plantTotal.SixThirty;
   }
 
-  const grandTotal = grand.Shift1 + grand.General + grand.Shift2 + grand.Night;
+  const grandTotal = grand.Shift1 + grand.General + grand.Shift2 + grand.SixThirty;
 
-  output.push(["Plant 1 + New Plant","Total",grand.Shift1,grand.General,grand.Shift2,grand.Night,grandTotal]);
+  output.push(["Plant 1 + New Plant","Total",grand.Shift1,grand.General,grand.Shift2,grand.SixThirty,grandTotal]);
 
   summarySheet.getRange(2,1,output.length,7).setValues(output);
 
@@ -188,7 +188,7 @@ function syncHRInput(){
 
   inputSheet.clear();
 
-  inputSheet.appendRow(["Plant","Agency","Req1","Req2","New1","NewGen","New2","NewNight"]);
+  inputSheet.appendRow(["Plant","Agency","Req1","Req2","New1","NewGen","New2","NewSixThirty"]);
 
   if(newRows.length>0){
     inputSheet.getRange(2,1,newRows.length,8).setValues(newRows);
