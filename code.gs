@@ -69,6 +69,8 @@ function generateSummary() {
   output.push(["Plant 1 + New Plant","Total",grand.Shift1,grand.General,grand.Shift2,grand.Night,grandTotal]);
 
   summarySheet.getRange(2,1,output.length,7).setValues(output);
+
+  syncHRInput();
 }
 
 
@@ -107,5 +109,72 @@ function getShift(timeValue){
 
   // NIGHT → 21:31–05:59
   return "Night";
+
+}
+
+function syncHRInput(){
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const summarySheet = ss.getSheetByName("AUTO_SUMMARY");
+  const inputSheet = ss.getSheetByName("HR_INPUT");
+
+  const summaryData = summarySheet.getDataRange().getValues();
+  const inputData = inputSheet.getDataRange().getValues();
+
+  const existing = {};
+
+  // store existing HR input rows
+  for(let i=1;i<inputData.length;i++){
+
+    const plant = inputData[i][0];
+    const agency = inputData[i][1];
+
+    if(!plant || !agency) continue;
+
+    const key = plant + "|" + agency;
+
+    existing[key] = inputData[i];
+
+  }
+
+  const newRows = [];
+
+  for(let i=1;i<summaryData.length;i++){
+
+    const plant = summaryData[i][0];
+    const agency = summaryData[i][1];
+
+    if(!plant || !agency || agency==="Total" || agency==="") continue;
+
+    const key = plant + "|" + agency;
+
+    if(existing[key]){
+
+      newRows.push(existing[key]);
+
+    } else {
+
+      newRows.push([
+        plant,
+        agency,
+        0, // Req1
+        0, // Req2
+        0, // New1
+        0, // NewGen
+        0, // New2
+        0  // NewNight
+      ]);
+
+    }
+
+  }
+
+  inputSheet.clear();
+
+  inputSheet.appendRow(["Plant","Agency","Req1","Req2","New1","NewGen","New2","NewNight"]);
+
+  if(newRows.length>0){
+    inputSheet.getRange(2,1,newRows.length,8).setValues(newRows);
+  }
 
 }
