@@ -23,7 +23,7 @@ function generateSummary() {
     if (!summary[plant]) summary[plant] = {};
 
     if (!summary[plant][agency]) {
-      summary[plant][agency] = {Shift1:0, General:0, Shift2:0, Night:0};
+      summary[plant][agency] = {Shift1:0, General:0, Shift2:0, SixThirty:0};
     }
 
     summary[plant][agency][shift]++;
@@ -34,11 +34,11 @@ function generateSummary() {
 
   const output = [];
 
-  let grand = {Shift1:0, General:0, Shift2:0, Night:0};
+  let grand = {Shift1:0, General:0, Shift2:0, SixThirty:0};
 
   for (const plant in summary) {
 
-    let plantTotal = {Shift1:0, General:0, Shift2:0, Night:0};
+    let plantTotal = {Shift1:0, General:0, Shift2:0, SixThirty:0};
 
     for (const agency in summary[plant]) {
 
@@ -71,13 +71,16 @@ function generateSummary() {
   summarySheet.getRange(2,1,output.length,7).setValues(output);
 
   syncHRInput();
+  generateMPReport();
 }
 
 
 function getShift(timeValue){
 
+  // convert incoming value to string
   let str = timeValue.toString().trim();
 
+  // split hour and minute using "."
   let parts = str.split(".");
   let hour = parseInt(parts[0]);
 
@@ -87,28 +90,42 @@ function getShift(timeValue){
 
     let minStr = parts[1];
 
-    // handle 6.3 → 30 minutes
+    // vendor format rules
+    // 6.3  → 6:30
+    // 15.2 → 15:20
+    // 6.07 → 6:07
+
     if(minStr.length === 1){
       minute = parseInt(minStr) * 10;
     } else {
       minute = parseInt(minStr);
     }
 
+    if(minute > 59){
+      minute = 59;
+    }
+
   }
 
-  let totalMinutes = hour*60 + minute;
+  let totalMinutes = hour * 60 + minute;
 
-  // SHIFT 1 → 06:00–08:50
-  if(totalMinutes >= 360 && totalMinutes <= 530) return "Shift1";
+  // MORNING SHIFT → 05:51–08:50
+  if(totalMinutes >= 351 && totalMinutes <= 530){
+    return "Shift1";
+  }
 
-  // GENERAL → 08:51–14:50
-  if(totalMinutes >= 531 && totalMinutes <= 890) return "General";
+  // GENERAL SHIFT → 08:51–14:50
+  if(totalMinutes >= 531 && totalMinutes <= 890){
+    return "General";
+  }
 
-  // SHIFT 2 → 14:51–21:30
-  if(totalMinutes >= 891 && totalMinutes <= 1290) return "Shift2";
+  // SECOND SHIFT → 14:51–17:50
+  if(totalMinutes >= 891 && totalMinutes <= 1070){
+    return "Shift2";
+  }
 
-  // NIGHT → 21:31–05:59
-  return "Night";
+  // 6:30 SHIFT → 17:51–05:50
+  return "SixThirty";
 
 }
 
@@ -176,5 +193,96 @@ function syncHRInput(){
   if(newRows.length>0){
     inputSheet.getRange(2,1,newRows.length,8).setValues(newRows);
   }
+
+}
+
+function generateMPReport(){
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  const summarySheet = ss.getSheetByName("AUTO_SUMMARY");
+  const inputSheet = ss.getSheetByName("HR_INPUT");
+  const reportSheet = ss.getSheetByName("MP_REPORT");
+
+  const summaryData = summarySheet.getDataRange().getValues();
+  const inputData = inputSheet.getDataRange().getValues();
+
+  reportSheet.clear();
+
+  reportSheet.appendRow([
+    "Plant","Agency",
+    "1st Regular","1st New","Gen. Regular","Gen. New","2nd Regular","2nd New","6:30 Regular","6:30 New",
+    "Request 1st","Request 2nd","Difference 1st","Difference 2nd","Total"
+  ]);
+
+  const inputMap = {};
+
+  for(let i=1;i<inputData.length;i++){
+
+    const plant = inputData[i][0];
+    const agency = inputData[i][1];
+
+    if(!plant || !agency) continue;
+
+    const key = plant+"|"+agency;
+
+    inputMap[key] = inputData[i];
+
+  }
+
+  const output = [];
+
+  let grandTotal = 0;
+
+  for(let i=1;i<summaryData.length;i++){
+
+    const plant = summaryData[i][0];
+    const agency = summaryData[i][1];
+
+    if(!plant || !agency || agency==="Total") continue;
+
+    const s1 = summaryData[i][2];
+    const g  = summaryData[i][3];
+    const s2 = summaryData[i][4];
+    const n  = summaryData[i][5];
+
+    const key = plant+"|"+agency;
+
+    const input = inputMap[key] || [null,null,0,0,0,0,0,0];
+
+    const req1 = input[2];
+    const req2 = input[3];
+
+    const new1 = input[4];
+    const newG = input[5];
+    const new2 = input[6];
+    const newN = input[7];
+
+    const diff1 = (s1 + new1 + g + newG) - req1;
+
+    const diff2 = (s2 + new2 + n + newN) - req2;
+
+    const total =
+      s1 + new1 +
+      g + newG +
+      s2 + new2 +
+      n + newN;
+
+    grandTotal += total;
+
+    output.push([
+      plant,agency,
+      s1,new1,
+      g,newG,
+      s2,new2,
+      n,newN,
+      req1,req2,
+      diff1,diff2,
+      total
+    ]);
+
+  }
+
+  reportSheet.getRange(2,1,output.length,15).setValues(output);
 
 }
