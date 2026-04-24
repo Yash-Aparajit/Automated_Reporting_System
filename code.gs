@@ -21,12 +21,10 @@ if (!plant || !agency || !inTime) continue;
 
 const shift = getShift(inTime);
 
-// initialize plant
 if (!summary[plant]) {
   summary[plant] = {};
 }
 
-// initialize agency inside plant
 if (!summary[plant][agency]) {
   summary[plant][agency] = {Shift1:0, General:0, Shift2:0, Night:0};
 }
@@ -68,6 +66,7 @@ summarySheet.getRange(2,1,output.length,7).setValues(output);
 }
 
 }
+
 
 
 function getShift(timeValue){
