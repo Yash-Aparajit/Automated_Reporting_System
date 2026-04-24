@@ -1,48 +1,71 @@
 function generateSummary() {
 
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const rawSheet = ss.getSheetByName("RAW_ATTENDANCE");
-  const summarySheet = ss.getSheetByName("AUTO_SUMMARY");
+const ss = SpreadsheetApp.getActiveSpreadsheet();
+const rawSheet = ss.getSheetByName("RAW_ATTENDANCE");
+const summarySheet = ss.getSheetByName("AUTO_SUMMARY");
 
-  const data = rawSheet.getDataRange().getValues();
+const data = rawSheet.getDataRange().getValues();
 
-  summarySheet.clear();
+summarySheet.clear();
 
-  const summary = {};
+const summary = {};
 
-  for (let i = 1; i < data.length; i++) {
+for (let i = 1; i < data.length; i++) {
 
-    const agency = data[i][1];
-    const inTime = data[i][7];
+```
+const plant = data[i][0];   // P-1 / P-2
+const agency = data[i][1];
+const inTime = data[i][7];
 
-    if (!agency || !inTime) continue;
+if (!plant || !agency || !inTime) continue;
 
-    const shift = getShift(inTime);
+const shift = getShift(inTime);
 
-    if (!summary[agency]) {
-      summary[agency] = {Shift1:0, General:0, Shift2:0, Night:0};
-    }
+// initialize plant
+if (!summary[plant]) {
+  summary[plant] = {};
+}
 
-    summary[agency][shift]++;
+// initialize agency inside plant
+if (!summary[plant][agency]) {
+  summary[plant][agency] = {Shift1:0, General:0, Shift2:0, Night:0};
+}
 
-  }
+summary[plant][agency][shift]++;
+```
 
-  summarySheet.appendRow(["Agency","Shift1","General","Shift2","Night","Total"]);
+}
 
-  const output = [];
+summarySheet.appendRow(["Plant","Agency","Shift1","General","Shift2","Night","Total"]);
 
-  for (let agency in summary) {
+const output = [];
 
-    const s = summary[agency];
-    const total = s.Shift1 + s.General + s.Shift2 + s.Night;
+for (let plant in summary) {
 
-    output.push([agency,s.Shift1,s.General,s.Shift2,s.Night,total]);
+```
+for (let agency in summary[plant]) {
 
-  }
+  const s = summary[plant][agency];
+  const total = s.Shift1 + s.General + s.Shift2 + s.Night;
 
-  if (output.length > 0) {
-    summarySheet.getRange(2,1,output.length,6).setValues(output);
-  }
+  output.push([
+    plant,
+    agency,
+    s.Shift1,
+    s.General,
+    s.Shift2,
+    s.Night,
+    total
+  ]);
+
+}
+```
+
+}
+
+if (output.length > 0) {
+summarySheet.getRange(2,1,output.length,7).setValues(output);
+}
 
 }
 
