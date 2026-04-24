@@ -12,7 +12,7 @@ function generateSummary() {
 
   for (let i = 1; i < data.length; i++) {
 
-    const plant = data[i][0];   // P-1 / P-2
+    const plant = data[i][0];
     const agency = data[i][1];
     const inTime = data[i][7];
 
@@ -20,9 +20,7 @@ function generateSummary() {
 
     const shift = getShift(inTime);
 
-    if (!summary[plant]) {
-      summary[plant] = {};
-    }
+    if (!summary[plant]) summary[plant] = {};
 
     if (!summary[plant][agency]) {
       summary[plant][agency] = {Shift1:0, General:0, Shift2:0, Night:0};
@@ -36,31 +34,41 @@ function generateSummary() {
 
   const output = [];
 
-  for (let plant in summary) {
+  let grand = {Shift1:0, General:0, Shift2:0, Night:0};
 
-    for (let agency in summary[plant]) {
+  for (const plant in summary) {
+
+    let plantTotal = {Shift1:0, General:0, Shift2:0, Night:0};
+
+    for (const agency in summary[plant]) {
 
       const s = summary[plant][agency];
       const total = s.Shift1 + s.General + s.Shift2 + s.Night;
 
-      output.push([
-        plant,
-        agency,
-        s.Shift1,
-        s.General,
-        s.Shift2,
-        s.Night,
-        total
-      ]);
+      output.push([plant, agency, s.Shift1, s.General, s.Shift2, s.Night, total]);
 
+      plantTotal.Shift1 += s.Shift1;
+      plantTotal.General += s.General;
+      plantTotal.Shift2 += s.Shift2;
+      plantTotal.Night += s.Night;
     }
 
+    const plantSum = plantTotal.Shift1 + plantTotal.General + plantTotal.Shift2 + plantTotal.Night;
+
+    output.push([plant,"Total",plantTotal.Shift1,plantTotal.General,plantTotal.Shift2,plantTotal.Night,plantSum]);
+    output.push(["","","","","","",""]);
+
+    grand.Shift1 += plantTotal.Shift1;
+    grand.General += plantTotal.General;
+    grand.Shift2 += plantTotal.Shift2;
+    grand.Night += plantTotal.Night;
   }
 
-  if (output.length > 0) {
-    summarySheet.getRange(2,1,output.length,7).setValues(output);
-  }
+  const grandTotal = grand.Shift1 + grand.General + grand.Shift2 + grand.Night;
 
+  output.push(["Plant 1 + New Plant","Total",grand.Shift1,grand.General,grand.Shift2,grand.Night,grandTotal]);
+
+  summarySheet.getRange(2,1,output.length,7).setValues(output);
 }
 
 
